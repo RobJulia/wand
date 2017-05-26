@@ -8,13 +8,13 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class TeacherService {
-    @com.pcq.annotation.WandMethod(params = "a")
+    @WandMethod(params = "a")
     public String teach(String a){
         return a;
     }
 
-    @com.pcq.annotation.WandMethod(params = "b")
-    public String dianMing(String b){
+    @WandMethod(params = "b")
+    public String dianMing(String b,int id,Integer integer,boolean istrue,Boolean isTrue){
         return b;
     }
 }

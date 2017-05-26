@@ -6,11 +6,13 @@ import java.util.List;
 /**
  * Created by pcq on 2017/5/24.
  */
-public class WandMethod {
+public class WMethod {
     public String className;
     public String methodName;
+    public String methodDesc;
+
     public Method method;
-    public List<WandParameter> parameters;
+    public List<WParameter> parameters;
 
     public String getClassName() {
         return className;
@@ -28,11 +30,11 @@ public class WandMethod {
         this.methodName = methodName;
     }
 
-    public List<WandParameter> getParameters() {
+    public List<WParameter> getParameters() {
         return parameters;
     }
 
-    public void setParameters(List<WandParameter> parameters) {
+    public void setParameters(List<WParameter> parameters) {
         this.parameters = parameters;
     }
 
@@ -42,5 +44,13 @@ public class WandMethod {
 
     public void setMethod(Method method) {
         this.method = method;
+    }
+
+    public String getMethodDesc() {
+        return methodDesc;
+    }
+
+    public void setMethodDesc(String methodDesc) {
+        this.methodDesc = methodDesc;
     }
 }

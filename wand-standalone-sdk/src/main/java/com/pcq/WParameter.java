@@ -3,7 +3,7 @@ package com.pcq;
 /**
  * Created by pcq on 2017/5/24.
  */
-public class WandParameter {
+public class WParameter {
     private String name;
     private String desc;
     private String type;
