@@ -13,7 +13,7 @@ public class TeacherService {
         return a;
     }
 
-    @WandMethod(params = "b")
+    @WandMethod(params = "b",desc = "点名用的哈哈")
     public String dianMing(String b,int id,Integer integer,boolean istrue,Boolean isTrue){
         return b;
     }

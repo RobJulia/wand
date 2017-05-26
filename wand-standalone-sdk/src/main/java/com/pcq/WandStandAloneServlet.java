@@ -16,10 +16,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Administrator on 2017/5/25 0025.
@@ -42,15 +39,20 @@ public class WandStandAloneServlet extends HttpServlet implements ApplicationCon
         printWriter.println("<head> ");
         printWriter.println("<h1>wand </h1><body>");
         if (requestURI.startsWith("/wand/methodList")) {
-            printWriter.println("服务:方法<p>");
-            for (String methodName : wandMethodMap.keySet()) {
-                String className = wandMethodMap.get(methodName).getClassName();
-                printWriter.println(className + ":" + methodName + "<a href=\"/wand/methodInfo?className=" + className + "&methodName=" + methodName + "\">调用</a><p>");
+            printWriter.println("服务:方法:方法描述<p>");
+            for (String wMethodName : wandMethodMap.keySet()) {
+                String[] key = wMethodName.split("#");
+                String className = key[0];
+                String methodName = key[1];
+                printWriter.println("<tr><td>"+className+"</td>" +
+                        "<td>"+methodName+"</td>" +
+                        "<td>"+wandMethodMap.get(wMethodName).getMethodDesc()+"</td>" +
+                        "<td><a href=\"/wand/methodInfo?className=" + className + "&methodName=" + methodName + "\">调用</a></td></tr>");
             }
         } else if (requestURI.startsWith("/wand/methodInfo")) {
             String className = req.getParameter("className");
             String methodName = req.getParameter("methodName");
-            WMethod wMethod = wandMethodMap.get(methodName);
+            WMethod wMethod = wandMethodMap.get(className+"#"+methodName);
             printWriter.println("服务名：" + className + "<p>");
             printWriter.println("方法名：" + methodName + "<p>");
             printWriter.println("<form action=\"/wand/invoke\" method=\"POST\"><table>");
@@ -58,15 +60,21 @@ public class WandStandAloneServlet extends HttpServlet implements ApplicationCon
             printWriter.println("<input name=\"className\" hidden value=\"" + className + "\"></input>");
             printWriter.println("<input name=\"methodName\" hidden value=\"" + methodName + "\"></input>");
 
-            int i = 1;
+            int i = 0;
             for (WParameter parameter : wMethod.getParameters()) {
                 String name = parameter.getName() == null ? "" : parameter.getName();
-                printWriter.println("<tr><td>" + parameter.getType() + "</td><td>" + name + "</td><td><input name=\"field" + i + "\"></input></td></tr>");
+                printWriter.println("<tr>" +
+                        "<td>" + parameter.getType() + "</td>" +
+                        "<td>" + name + "</td>" +
+                        "<td><input name=\"field-" + i + "\"></input></td>" +
+//                        "<td><input name=\"check" + i + "\"  type=checkbox /></td>" +
+
+                        "</tr>");
 
                 i++;
             }
             printWriter.println("</table>");
-            printWriter.println("<input type=submit></input></form>");
+            printWriter.println("<input type=submit></input><input type=reset></input></form>");
         }
         printWriter.println("</body></head>");
         printWriter.println("</html>");
@@ -80,34 +88,36 @@ public class WandStandAloneServlet extends HttpServlet implements ApplicationCon
             String methodName = req.getParameter("methodName");
             Map<String, String[]> parameterMap = req.getParameterMap();
             Object bean = beanMap.get(className);
-            WMethod wMethod = wandMethodMap.get(methodName);
-            int count = 0;
-            List<String> paramList = new ArrayList<String>();
+            WMethod wMethod = wandMethodMap.get(className+"#"+methodName);
+            List<WParameter> wParameterList = wMethod.getParameters();
+
+            int count = wParameterList.size();
+            String[] paramArr=new String[count];
             for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
                 String key = entry.getKey();
-                if (key.equals("className") || key.equals("methodName")) {
-                    continue;
+                String[] split = key.split("-");
+                if(split.length>1){
+                    int seq= Integer.parseInt(split[1]);
+                    paramArr[seq]=(entry.getValue()[0]);
                 }
-                paramList.add(entry.getValue()[0]);
-                count++;
+
             }
-            Object[] objects = new Object[count];
-            List<WParameter> wParameterList = wMethod.getParameters();
+            Object[] parameters = new Object[count];
             PrintWriter printWriter = resp.getWriter();
 
             for (int i = 0; i < count; i++) {
                 WParameter wParameter = wParameterList.get(i);
-                BuildParameterRes buildParameterRes = buildParameter(paramList.get(i), wParameter.getType());
+                BuildParameterRes buildParameterRes = buildParameter(paramArr[i], wParameter.getType());
                 if (!buildParameterRes.isSuccess()) {
-                    printWriter.println("第"+(i+1)+"参数非法");
+                    printWriter.println("第" + (i + 1) + "参数非法");
                     return;
                 }
-                objects[i] = buildParameterRes.getData();
+                parameters[i] = buildParameterRes.getData();
 
             }
             Method method = wMethod.getMethod();
             try {
-                Object res = method.invoke(bean, objects);
+                Object res = method.invoke(bean, parameters);
                 printWriter.println(JSONObject.toJSONString(res));
 
             } catch (IllegalAccessException e) {
@@ -118,116 +128,78 @@ public class WandStandAloneServlet extends HttpServlet implements ApplicationCon
 
         }
     }
-    class BuildParameterRes{
-        private boolean success;
-        private String errMsg;
-        private Object data;
-        public BuildParameterRes(boolean scuccess,Object o){
-            this.success=scuccess;
-            this.data=o;
-        }
-        public BuildParameterRes(boolean scuccess,String errMsg){
-            this.success=scuccess;
-            this.errMsg=errMsg;
-        }
-        public boolean isSuccess() {
-            return success;
-        }
 
-        public void setSuccess(boolean success) {
-            this.success = success;
-        }
-
-        public String getErrMsg() {
-            return errMsg;
-        }
-
-        public void setErrMsg(String errMsg) {
-            this.errMsg = errMsg;
-        }
-
-        public Object getData() {
-            return data;
-        }
-
-        public void setData(Object data) {
-            this.data = data;
-        }
-        public  BuildParameterRes Success(Object o){
-            return new BuildParameterRes(true,o);
-        }
-    }
     private BuildParameterRes buildParameter(String o, String type) {
         try {
             //基本类型
             if (type.equals("java.lang.String")) {
-                return new BuildParameterRes(true,o);
+                return new BuildParameterRes(true, o);
             }
 
             if (type.equals("int")) {
                 if (StringUtils.isEmpty(o)) {
-                    return new BuildParameterRes(true,0);
+                    return new BuildParameterRes(true, 0);
                 }
                 int a = Integer.valueOf(o);
-                return new BuildParameterRes(true,a);
+                return new BuildParameterRes(true, a);
             }
             if (type.equals("long")) {
                 if (StringUtils.isEmpty(o)) {
-                    return new BuildParameterRes(true,0l);
+                    return new BuildParameterRes(true, 0l);
                 }
                 long a = Long.valueOf(o);
-                return new BuildParameterRes(true,0l);
+                return new BuildParameterRes(true, 0l);
             }
             if (type.equals("float")) {
                 if (StringUtils.isEmpty(o)) {
-                    return new BuildParameterRes(true,0f);
+                    return new BuildParameterRes(true, 0f);
                 }
                 float a = Float.valueOf(o);
-                return new BuildParameterRes(true,a);
+                return new BuildParameterRes(true, a);
             }
             if (type.equals("double")) {
                 if (StringUtils.isEmpty(o)) {
-                    return new BuildParameterRes(true,0f);
+                    return new BuildParameterRes(true, 0f);
                 }
                 double a = Double.valueOf(o);
-                return new BuildParameterRes(true,a);
+                return new BuildParameterRes(true, a);
             }
             if (type.equals("boolean")) {
                 if (StringUtils.isEmpty(o)) {
-                    return new BuildParameterRes(true,false);
+                    return new BuildParameterRes(true, false);
                 }
                 if (o.equalsIgnoreCase("true")) {
-                    return new BuildParameterRes(true,true);
+                    return new BuildParameterRes(true, true);
                 }
-                return new BuildParameterRes(true,false) ;
+                return new BuildParameterRes(true, false);
             }
             //包装类型
             if (StringUtils.isEmpty(o)) {
-                return new BuildParameterRes(true,null);
+                return new BuildParameterRes(true, null);
             }
             if (type.equals("java.lang.Integer")) {
-                return new BuildParameterRes(true,Integer.valueOf(o));
+                return new BuildParameterRes(true, Integer.valueOf(o));
             }
             if (type.equals("java.lang.Long")) {
-                return new BuildParameterRes(true,Long.valueOf(o));
+                return new BuildParameterRes(true, Long.valueOf(o));
             }
 
             if (type.equals("java.lang.Boolean")) {
                 if (o.equalsIgnoreCase("true")) {
-                    return new BuildParameterRes(true,Boolean.TRUE);
+                    return new BuildParameterRes(true, Boolean.TRUE);
                 }
-                return new BuildParameterRes(true,Boolean.FALSE);
+                return new BuildParameterRes(true, Boolean.FALSE);
             }
             if (type.equals("java.lang.Float")) {
-                return new BuildParameterRes(true,Float.valueOf(o));
+                return new BuildParameterRes(true, Float.valueOf(o));
             }
             if (type.equals("java.lang.Double")) {
-                return new BuildParameterRes(true,Double.valueOf(o));
+                return new BuildParameterRes(true, Double.valueOf(o));
             }
         } catch (NumberFormatException e) {
-            return new BuildParameterRes(false,"参数类型错误");
+            return BuildParameterRes.buildFailedRes(false, "参数类型错误");
         }
-        return new BuildParameterRes(false,"参数类型错误");
+        return BuildParameterRes.buildFailedRes(false, "参数类型错误");
 
     }
 
@@ -246,7 +218,7 @@ public class WandStandAloneServlet extends HttpServlet implements ApplicationCon
                     if (null == beanMap.get(clazzName)) {
                         beanMap.put(clazzName, bean);
                     }
-                    wandMethodMap.put(method.getName(), builldWandMethod(method, clazzName, annotation));
+                    wandMethodMap.put(clazzName+ "#" + method.getName(), builldWandMethod(method, clazzName, annotation));
                 }
             }
         }
@@ -260,7 +232,7 @@ public class WandStandAloneServlet extends HttpServlet implements ApplicationCon
         wMethod.setMethodDesc(anotation.desc());
         String params = anotation.params();
 
-        List<WParameter> parameterList = new ArrayList<WParameter>();
+        List<WParameter> parameterList = new LinkedList<WParameter>();
         Class[] parameterTypes = method.getParameterTypes();
         String[] paramNames = params.split("&");
         int parameterSeq = 0;
