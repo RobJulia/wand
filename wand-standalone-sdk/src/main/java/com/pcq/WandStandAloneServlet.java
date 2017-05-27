@@ -39,7 +39,7 @@ public class WandStandAloneServlet extends HttpServlet implements ApplicationCon
         printWriter.println("<head> ");
         printWriter.println("<h1>wand </h1><body>");
         if (requestURI.startsWith("/wand/methodList")) {
-            printWriter.println("服务:方法:方法描述<p>");
+            printWriter.println("<table><tr><th>服务</th><th>方法</th><th>方法描述</th></tr><p>");
             for (String wMethodName : wandMethodMap.keySet()) {
                 String[] key = wMethodName.split("#");
                 String className = key[0];
@@ -49,6 +49,7 @@ public class WandStandAloneServlet extends HttpServlet implements ApplicationCon
                         "<td>"+wandMethodMap.get(wMethodName).getMethodDesc()+"</td>" +
                         "<td><a href=\"/wand/methodInfo?className=" + className + "&methodName=" + methodName + "\">调用</a></td></tr>");
             }
+            printWriter.println("</table>");
         } else if (requestURI.startsWith("/wand/methodInfo")) {
             String className = req.getParameter("className");
             String methodName = req.getParameter("methodName");
