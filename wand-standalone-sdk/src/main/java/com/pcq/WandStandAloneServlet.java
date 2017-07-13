@@ -285,6 +285,7 @@ public class WandStandAloneServlet
         }
         wMethod.setParameters(parameterList);
         return wMethod;
+
     }
 
     public void setApplicationContext(ApplicationContext applicationContext)
