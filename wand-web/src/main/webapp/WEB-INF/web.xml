@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app  version="3.1" xmlns="http://xmlns.jcp.org/xml/ns/javaee"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+<web-app version="3.1" xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
                                             http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
 
 
@@ -46,8 +46,6 @@
     </context-param>
 
 
-
-
     <listener>
         <listener-class>
             org.springframework.web.context.ContextLoaderListener
@@ -56,6 +54,10 @@
     <servlet>
         <servlet-name>wandServlet</servlet-name>
         <servlet-class>com.pcq.WandStandAloneServlet</servlet-class>
+        <init-param>
+            <param-name>secretKey</param-name>
+            <param-value>wand</param-value>
+        </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
 
@@ -63,5 +65,5 @@
         <servlet-name>wandServlet</servlet-name>
         <url-pattern>/wand/*</url-pattern>
     </servlet-mapping>
-  <display-name>Archetype Created Web Application</display-name>
+    <display-name>Archetype Created Web Application</display-name>
 </web-app>

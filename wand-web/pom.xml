@@ -3,13 +3,13 @@
   <parent>
     <groupId>com.pcq</groupId>
     <artifactId>wand</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.2-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.pcq</groupId>
   <artifactId>wand-web</artifactId>
   <packaging>war</packaging>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.2-SNAPSHOT</version>
   <name>wand Webapp</name>
   <url>http://maven.apache.org</url>
   <dependencies>
